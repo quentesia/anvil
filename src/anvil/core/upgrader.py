@@ -5,6 +5,7 @@ from anvil.core.parsers.requirements import RequirementsParser
 from anvil.core.parsers.pyproject import PyProjectParser
 from anvil.tools.package import PackageManager
 from anvil.tools.runner import TestRunner
+from anvil.retrievers.main import ChangelogRetriever
 # from anvil.agent.graph import builder as graph_builder # Validation pending
 
 class Upgrader:
@@ -14,6 +15,7 @@ class Upgrader:
         self.project_root = Path(project_root)
         self.package_manager = PackageManager(self.project_root)
         self.test_runner = TestRunner(self.project_root)
+        self.retriever = ChangelogRetriever()
         
     def scan_dependencies(self) -> List[Dependency]:
         """Scans for dependencies in known files."""
@@ -42,6 +44,14 @@ class Upgrader:
         print(f"Found {len(deps)} dependencies.")
         for dep in deps:
             print(f" - {dep.name} {dep.specifier} ({dep.source_file})")
+            
+            # Simple demonstration of changelog retrieval (if parsing Logic existed to get target version)
+            # For this 'feat', we just demonstrate it works by trying to get source url
+            source_url = self.retriever.get_source_url(dep.name)
+            if source_url:
+                print(f"   [Source]: {source_url}")
+            else:
+                print(f"   [Source]: Not found")
             
         # Placeholder for agent invocation
         # state = {"dependencies": deps, "proposals": [], "errors": []}
