@@ -6,13 +6,16 @@ from anvil.core.parsers.pyproject import PyProjectParser
 from anvil.tools.package import PackageManager
 from anvil.tools.runner import TestRunner
 from anvil.retrievers.main import ChangelogRetriever
-# from anvil.agent.graph import builder as graph_builder # Validation pending
+from anvil.core.logging import get_logger
+
+logger = get_logger("upgrader")
 
 class Upgrader:
     """Orchestrates the upgrade process."""
     
     def __init__(self, project_root: str):
         self.project_root = Path(project_root)
+        logger.debug(f"Initialized Upgrader for path: {self.project_root}")
         self.package_manager = PackageManager(self.project_root)
         self.test_runner = TestRunner(self.project_root)
         self.retriever = ChangelogRetriever()
@@ -24,13 +27,16 @@ class Upgrader:
         # Check requirements.txt
         req_file = self.project_root / "requirements.txt"
         if req_file.exists():
+            logger.debug(f"Found requirements.txt, parsing...")
             deps.extend(RequirementsParser(req_file).parse())
             
         # Check pyproject.toml
         pyproj_file = self.project_root / "pyproject.toml"
         if pyproj_file.exists():
+             logger.debug(f"Found pyproject.toml, parsing...")
              deps.extend(PyProjectParser(pyproj_file).parse())
              
+        logger.info(f"Scan complete. Found {len(deps)} total dependencies.")
         return deps
         
     def check_updates(self, dry_run: bool = True):
@@ -40,23 +46,14 @@ class Upgrader:
         2. Analyze (Agent) - Placeholder for now
         3. Report / Apply
         """
+        logger.info("Starting dependency check...")
         deps = self.scan_dependencies()
-        print(f"Found {len(deps)} dependencies.")
+        
         for dep in deps:
-            print(f" - {dep.name} {dep.specifier} ({dep.source_file})")
+            logger.debug(f"Processing dependency: {dep.name} ({dep.current_version or 'unknown version'})")
             
-            # Simple demonstration of changelog retrieval (if parsing Logic existed to get target version)
-            # For this 'feat', we just demonstrate it works by trying to get source url
             source_url = self.retriever.get_source_url(dep.name)
             if source_url:
-                print(f"   [Source]: {source_url}")
+                logger.info(f" - {dep.name}: Source URL found -> {source_url}")
             else:
-                print(f"   [Source]: Not found")
-            
-        # Placeholder for agent invocation
-        # state = {"dependencies": deps, "proposals": [], "errors": []}
-        # result = graph_builder().invoke(state)
-        
-        if not dry_run:
-            # logic to apply updates
-            pass
+                logger.debug(f" - {dep.name}: Source URL not found")
