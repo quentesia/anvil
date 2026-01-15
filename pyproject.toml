@@ -1,0 +1,32 @@
+[project]
+name = "anvil"
+version = "0.1.0"
+description = "AI-powered dependency upgrade agent"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "langchain>=0.3.0",
+    "langchain-openai>=0.1.0",
+    "langgraph>=0.2.0",
+    "pydantic>=2.0.0",
+    "typer>=0.9.0",
+    "packaging>=23.0",
+    "tomli>=2.0.0",
+]
+
+[project.scripts]
+anvil = "anvil.main:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0.0",
+    "ruff>=0.3.0",
+    "mypy>=1.9.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/anvil"]
