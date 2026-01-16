@@ -101,3 +101,49 @@ class Upgrader:
             )
             
         console.print(table)
+
+    def interactive_upgrade(self):
+        """
+        Launches interactive TUI for upgrade selection.
+        """
+        from anvil.ui.dashboard import DependencyDashboard
+        
+        logger.info("Scanning for interactive upgrade...")
+        deps = self.scan_dependencies()
+        
+        # Prepare data for dashboard
+        dashboard_data = []
+        for dep in deps:
+            # 1. Get Versions (reuse logic efficiently?)
+            # Ideally fetch in parallel or show loading state. For now, sequential block.
+            logger.debug(f"Fetching data for {dep.name}...")
+            
+            latest = self.pypi.get_latest_version(dep.name)
+            installed = self.env_checker.get_installed_version(dep.name)
+            
+            status = "❓"
+            if not installed:
+                status = "⚠️"
+            elif latest:
+                if latest == installed:
+                    status = "✅"
+                else:
+                    status = "⬆️"
+            
+            dashboard_data.append({
+                "name": dep.name,
+                "range": dep.current_version or "any",
+                "installed": installed or "missing",
+                "latest": latest or "N/A",
+                "status": status
+            })
+            
+        # Launch App
+        app = DependencyDashboard(dashboard_data)
+        selected_packages = app.run()
+        
+        if selected_packages:
+            console.print(f"[bold green]Generating upgrade plan for:[/bold green] {', '.join(selected_packages)}")
+            # Future: Call Graph Analysis & Changelog Fetching here
+        else:
+            console.print("[yellow]No packages selected.[/yellow]")

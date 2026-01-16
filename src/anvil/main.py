@@ -27,6 +27,16 @@ def check(
     upgrader.check_updates(dry_run=dry_run)
 
 @app.command()
+def upgrade(
+    path: str = typer.Argument(".", help="Path to project root"),
+):
+    """
+    Interactively select and upgrade packages.
+    """
+    upgrader = Upgrader(path)
+    upgrader.interactive_upgrade()
+
+@app.command()
 def version():
     """
     Show Anvil version.
