@@ -8,6 +8,17 @@ logger = get_logger("retriever.pypi")
 class PyPIRetriever(BaseRetriever):
     """Fetches metadata from PyPI."""
     
+    def get_latest_version(self, package_name: str) -> Optional[str]:
+        """Retrieves the latest version of the package from PyPI."""
+        data = self._fetch_pypi_json(package_name)
+        if not data:
+            return None
+        
+        info = data.get("info", {})
+        version = info.get("version") # This is typically the latest stable version
+        logger.debug(f"PyPI reports latest version for {package_name} is {version}")
+        return version
+
     def get_changelog(self, package_name: str, current_version: str, target_version: str) -> Optional[str]:
         return None
 
@@ -48,6 +59,7 @@ class PyPIRetriever(BaseRetriever):
         return None
 
     def _fetch_pypi_json(self, package_name: str) -> Optional[Dict[str, Any]]:
+        # TODO: Implement caching to avoid re-fetching for same package
         url = f"https://pypi.org/pypi/{package_name}/json"
         logger.debug(f"Fetching: {url}")
         try:
