@@ -45,3 +45,19 @@ pytest
 # Run tests with verbose output
 pytest -v
 ```
+
+## Testing on Other Projects
+
+To test Anvil against one of your other project's environments:
+
+1.  **Activate** the target project's virtual environment (e.g., `poetry shell` or `source .venv/bin/activate`).
+2.  **Install** Anvil into that environment in editable mode:
+    ```bash
+    pip install -e "/absolute/path/to/anvil"
+    ```
+3.  **Run** Anvil from the target project root:
+    ```bash
+    anvil check .
+    ```
+
+This ensures Anvil can use `importlib.metadata` to accurately detect the versions currently installed in that specific environment.
