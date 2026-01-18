@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 from typing import List, Optional
 from rich.console import Console
 from rich.table import Table
@@ -106,7 +107,14 @@ class Upgrader:
         """
         Launches interactive TUI for upgrade selection.
         """
-        from anvil.ui.dashboard import DependencyDashboard
+        try:
+            from anvil.ui.dashboard import DependencyDashboard
+        except ImportError:
+            logger.error("The 'textual' library is required for interactive mode but is not installed.")
+            console.print("[red]Error: 'textual' is missing.[/red]")
+            console.print("Please install it to use the interactive upgrader:")
+            console.print("  [bold]pip install textual[/bold]")
+            return
         
         logger.info("Scanning for interactive upgrade...")
         deps = self.scan_dependencies()
@@ -143,7 +151,54 @@ class Upgrader:
         selected_packages = app.run()
         
         if selected_packages:
-            console.print(f"[bold green]Generating upgrade plan for:[/bold green] {', '.join(selected_packages)}")
-            # Future: Call Graph Analysis & Changelog Fetching here
+            console.rule("[bold green]Impact Analysis[/bold green]")
+            
+            # 1. Build Graph
+            from anvil.core.graph import DependencyGraph
+            graph = DependencyGraph()
+            graph.build()
+            
+            for pkg in selected_packages:
+                console.print(f"\n[bold cyan]Analyzing {pkg}...[/bold cyan]")
+                
+                # Check Dependents
+                dependents = graph.get_dependents(pkg)
+                if dependents:
+                    console.print(f"  ⚠️  [yellow]Dependents:[/yellow] {', '.join(dependents)}")
+                else:
+                    console.print(f"  ✅  [dim]No reverse dependencies found.[/dim]")
+                    
+                # Fetch Changelog
+                # We need the 'Target Version' (Latest). 
+                # Re-fetch or cache from dashboard_data? Re-fetch for safety.
+                latest = self.pypi.get_latest_version(pkg)
+                current = self.env_checker.get_installed_version(pkg)
+                
+                if latest and latest != current:
+                    console.print(f"  📝 [blue]Fetching changelog ({current} -> {latest})...[/blue]")
+                    try:
+                        changelog = self.retriever.get_changelog(pkg, current, latest)
+                    except Exception as e:
+                        logger.error(f"Failed to fetch changelog for {pkg}: {e}")
+                        changelog = None
+                    
+                    if changelog:
+                        # Save full report
+                        report_file = os.path.join(os.getcwd(), "IMPACT_REPORT.md")
+                        with open(report_file, "w") as f:
+                            f.write(f"# Impact Analysis: {pkg}\n")
+                            f.write(f"Upgrade: `{current}` -> `{latest}`\n\n")
+                            f.write(changelog)
+                        
+                        console.print(f"  ✅ [green]Full changelog saved to {report_file}[/green]\n")
+                        
+                        # Show full changelog properly formatted
+                        from rich.markdown import Markdown
+                        console.print(Markdown(changelog))
+                    else:
+                        console.print("  [dim]No changelog found.[/dim]")
+                else:
+                    console.print("  [green]Already up to date.[/green]")
+
         else:
             console.print("[yellow]No packages selected.[/yellow]")

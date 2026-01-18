@@ -22,9 +22,23 @@ class ChangelogRetriever(BaseRetriever):
         # 2. Extract owner/repo from source URL
         # Assumption: source_url is like https://github.com/owner/repo
         if "github.com" in source_url:
+            # Format: https://github.com/owner/repo/tree/branch/subdir...
             parts = source_url.split("github.com/")
             if len(parts) > 1:
-                repo_slug = parts[1]
-                return self.github.get_changelog(repo_slug, current_version, target_version)
+                path_parts = parts[1].split('/')
+                if len(path_parts) >= 2:
+                    repo_slug = f"{path_parts[0]}/{path_parts[1]}"
+                    
+                    subdirectory = None
+                    # Check for '/tree/{branch}/...' pattern to extract subdir
+                    if len(path_parts) > 4 and path_parts[2] == "tree":
+                        # path_parts[3] is branch name (e.g. master)
+                        # path_parts[4:] is the subdirectory
+                        subdirectory = "/".join(path_parts[4:])
+                    elif len(path_parts) > 2 and path_parts[2] != "tree":
+                         # Sometimes it might just be /owner/repo/subdir directly (less common for browse URLs but possible)
+                         subdirectory = "/".join(path_parts[2:])
+                         
+                    return self.github.get_changelog(repo_slug, current_version, target_version, subdirectory, package_name=package_name)
                 
         return None

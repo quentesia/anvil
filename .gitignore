@@ -36,3 +36,6 @@ venv.bak/
 .vscode/
 .idea/
 *.swp
+
+# Project Related
+IMPACT_REPORT.md
