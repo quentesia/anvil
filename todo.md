@@ -6,6 +6,7 @@
 - [ ] **Expand Forge Support**: Add support for retrieving changelogs from GitLab and Bitbucket.
 - [ ] **Changelog Parsing**: Implement logic to parse the raw text/markdown of a changelog to extract only the relevant version section.
 - [ ] **Manual Package Ignore**: Add a configuration option (CLI arg or config file) to manually specify a list of packages to ignore.
+- [ ] **Website Parsing AI**: Find out if there's a way to attach an AI that can open any links in the changelogs and parse them for more accurate analysis.
 
 ## AI Agent & Models
 
