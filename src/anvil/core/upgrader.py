@@ -11,7 +11,9 @@ from anvil.tools.runner import TestRunner
 from anvil.retrievers.main import ChangelogRetriever
 from anvil.retrievers.pypi import PyPIRetriever
 from anvil.core.logging import get_logger
-from anvil.core.env import EnvironmentChecker # New component
+from anvil.core.env import EnvironmentChecker
+from anvil.core.scanner import CodebaseScanner
+from anvil.agent.brain import RiskAssessor
 
 logger = get_logger("upgrader")
 console = Console()
@@ -27,10 +29,15 @@ class Upgrader:
         self.retriever = ChangelogRetriever()
         self.pypi = PyPIRetriever()
         self.env_checker = EnvironmentChecker(project_root)
+        self.brain = RiskAssessor()
+        self.scanner = CodebaseScanner(project_root)
         
     def scan_dependencies(self) -> List[Dependency]:
         """Scans for dependencies in known files."""
         deps = []
+        
+# ... (skip to interactive_upgrade)
+
         
         # Check requirements.txt
         req_file = self.project_root / "requirements.txt"
@@ -195,6 +202,67 @@ class Upgrader:
                         # Show full changelog properly formatted
                         from rich.markdown import Markdown
                         console.print(Markdown(changelog))
+
+                        # --- AI Analysis ---
+                        console.print(f"\n  🧠 [magenta]Ai Impact Analysis...[/magenta]")
+                        # Fetch context
+                        context = self.scanner.scan_package_usage(pkg)
+                        if context:
+                                console.print(f"  [dim]Found {len(context)} usages in codebase (e.g. {context[:3]})...[/dim]")
+                        
+                        import platform
+                        current_py = platform.python_version()
+                        
+                        # Fetch Project Config (pyproject.toml)
+                        project_config = ""
+                        pyproj_path = self.project_root / "pyproject.toml"
+                        if pyproj_path.exists():
+                            try:
+                                with open(pyproj_path, "r") as f:
+                                    # Truncate if too huge to avoid context overflow, but usually fine
+                                    project_config = f.read()[:5000] 
+                            except Exception:
+                                pass
+                                
+                                
+                        # --- DEBUG: Save raw changelog passed to AI ---
+                        with open("debug_changelog.log", "w") as f:
+                            f.write(changelog)
+                        # ----------------------------------------------
+
+                        assessment = self.brain.assess_changelog(
+                            pkg, current, latest, changelog, 
+                            usage_context=context, 
+                            python_version=current_py,
+                            project_config=project_config
+                        )
+                        
+                        if assessment:
+                            score_color = "green"
+                            if assessment.risk_score == "medium": score_color = "yellow"
+                            if assessment.risk_score == "high": score_color = "red"
+                            if assessment.risk_score == "positive": score_color = "cyan"
+                            
+                            console.print(f"\n  🤖 [bold {score_color}]AI Verdict: {assessment.risk_score.upper()} RISK[/bold {score_color}]")
+                            console.print(f"  [dim]{assessment.summary}[/dim]")
+                            
+                            if assessment.breaking_changes:
+                                console.print(f"  [bold red]Detected Breaking Changes:[/bold red]")
+                                for break_item in assessment.breaking_changes:
+                                    console.print(f"    - [red]{break_item.category}[/red]: {break_item.description}")
+                            
+                            console.print(f"  [italic cyan]Reasoning:[/italic cyan] {assessment.justification}\n")
+                            
+                            if assessment.migration_guide:
+                                console.print(f"  🛠️  [bold yellow]Migration Guide Generated[/bold yellow]")
+                                console.print(f"     Saved to: [underline]MIGRATION_PROMPT.md[/underline]")
+                                
+                                prompt_file = os.path.join(os.getcwd(), "MIGRATION_PROMPT.md")
+                                with open(prompt_file, "w") as f:
+                                    f.write(assessment.migration_guide)
+                        else:
+                            console.print("  [dim]AI Analysis skipped or failed (check logs or ensure Ollama is running).[/dim]")
+
                     else:
                         console.print("  [dim]No changelog found.[/dim]")
                 else:

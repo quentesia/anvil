@@ -13,6 +13,7 @@
 - [ ] **Model Normalization**: Dynamically configure the LLM provider and model parameters based on the provided API key (e.g., auto-select GPT-4o for OpenAI keys, Claude 3.5 for Anthropic keys).
 - [ ] **Connect Agent Brain**: Integrate the `AgentState` and LangGraph workflow into the main `Upgrader` loop to perform actual analysis.
 - [ ] **Prompt Refinement**: Improve system prompts to better detect breaking changes and generate safer code migration suggestions.
+- [ ] **Context Truncation**: Implement a more sophisticated context truncation strategy to handle long changelogs and codebases.
 
 ## Core Upgrade Logic
 
@@ -24,8 +25,8 @@
 
 ## CLI & UX
 
-- [ ] **Interactive Mode**: Allow users to interactively approve or reject individual upgrade proposals.
-- [ ] **Rich Reporting**: Improve CLI output to show risk levels (Low/Medium/High) and summary reasoning for each package.
+- [X] **Interactive Mode**: Allow users to interactively approve or reject individual upgrade proposals.
+- [X] **Rich Reporting**: Improve CLI output to show risk levels (Low/Medium/High) and summary reasoning for each package.
 
 ## Documentation
 
