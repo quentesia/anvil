@@ -1,6 +1,9 @@
 import subprocess
 from typing import List, Tuple
 from pathlib import Path
+from anvil.core.logging import get_logger
+
+logger = get_logger("tools.runner")
 
 class TestRunner:
     """Runs project tests to verify upgrades."""
@@ -11,19 +14,35 @@ class TestRunner:
     def run_tests(self) -> Tuple[bool, str]:
         """
         Runs tests and returns (success, output).
-        Currently defaults to pytest.
+        Default: 'pytest' then 'python -m pytest'.
         """
-        # TODO: Detect test runner (pytest, unittest, nose, etc.)
-        cmd = ["pytest"]
+        commands_to_try = [
+            ["python3", "-m", "pytest"],
+            ["pytest"]
+        ]
         
-        try:
-            result = subprocess.run(
-                cmd, 
-                cwd=self.project_root, 
-                capture_output=True, 
-                text=True, 
-                check=False
-            )
-            return result.returncode == 0, result.stdout + result.stderr
-        except FileNotFoundError:
-            return False, "pytest not found"
+        for cmd in commands_to_try:
+            logger.debug(f"Running tests with: {' '.join(cmd)}")
+            try:
+                result = subprocess.run(
+                    cmd, 
+                    cwd=self.project_root, 
+                    capture_output=True, 
+                    text=True, 
+                    timeout=300 # 5 min timeout
+                )
+                success = result.returncode == 0
+                output = result.stdout + "\n" + result.stderr
+                
+                if success:
+                    logger.info("Tests PASSED ✅")
+                else:
+                    logger.warning("Tests FAILED ❌")
+                    
+                return success, output
+                
+            except (FileNotFoundError, subprocess.TimeoutExpired) as e:
+                logger.debug(f"Test command failed to launch/complete: {e}")
+                continue
+                
+        return False, "Could not launch pytest. Is it installed?"

@@ -263,6 +263,47 @@ class Upgrader:
                         else:
                             console.print("  [dim]AI Analysis skipped or failed (check logs or ensure Ollama is running).[/dim]")
 
+                        # --- EXECUTION PHASE ---
+                        from rich.prompt import Confirm
+                        
+                        console.print(f"\n[bold]Ready to apply update: {pkg} {current} -> {latest}[/bold]")
+                        
+                        if Confirm.ask("Proceed with installation?"):
+                            console.print(f"  🚀 Installing {pkg}=={latest} (Trial)...")
+                            # Phase 1: Temporary Install (Environment Only)
+                            if self.package_manager.install(pkg, latest, update_manifest=False):
+                                console.print("  ✅ Trial installation successful.")
+                                
+                                console.print("  🧪 Running tests...")
+                                success, output = self.test_runner.run_tests()
+                                
+                                if success:
+                                    console.print("  ✅ [bold green]Tests PASSED![/bold green]")
+                                    
+                                    # Phase 2: Commit (Update Manifest)
+                                    console.print(f"  📝 updating manifest (pyproject.toml/requirements)...")
+                                    if self.package_manager.install(pkg, latest, update_manifest=True):
+                                         console.print("  ✨ Upgrade Complete & Persisted.")
+                                    else:
+                                         console.print("  ⚠️ Upgrade installed but manifest update failed.")
+                                else:
+                                    console.print("  ❌ [bold red]Tests FAILED![/bold red]")
+                                    console.print(f"  [dim]Test Output (tail):[/dim]\n{output[-1000:]}")
+                                    
+                                    if Confirm.ask(f"⚠️  Tests failed. Rollback to {current}?"):
+                                        console.print(f"  ⏪ Rolling back to {pkg}=={current}...")
+                                        if self.package_manager.install(pkg, current, update_manifest=False):
+                                            console.print("  ✅ Rollback successful.")
+                                        else:
+                                            console.print("  ❌ [red]Rollback failed! Check environment.[/red]")
+                                    else:
+                                        console.print("  ⚠️  [yellow]Update kept despite test failure.[/yellow]")
+                            else:
+                                console.print("  ❌ [red]Installation failed.[/red]")
+                        else:
+                            console.print("  Update cancelled.")
+                        # -----------------------
+
                     else:
                         console.print("  [dim]No changelog found.[/dim]")
                 else:
