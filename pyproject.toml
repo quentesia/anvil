@@ -1,9 +1,28 @@
 [project]
-name = "anvil"
-version = "0.1.0"
-description = "AI-powered dependency upgrade agent"
+name = "anvil-py"
+version = "0.1.1"
+description = "AI-powered agentic dependency manager that analyzes changelogs and safely upgrades packages."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [
+  { name = "Akash Bhat", email = "quentesia.art@gmail.com" },
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Environment :: Console",
+]
+keywords = ["dependency-manager", "agent", "ai", "llm", "upgrade", "automation", "security", "forensics"]
+urls = { Repository = "https://github.com/akashbhat/anvil", Issues = "https://github.com/akashbhat/anvil/issues" }
+
 dependencies = [
     "langchain>=0.3.0",
     "langchain-openai>=0.1.0",
