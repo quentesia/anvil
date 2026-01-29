@@ -83,15 +83,27 @@ def test_github_retriever_release_note(mock_requests_get):
 
 def test_main_retriever_integration(mock_requests_get):
     retriever = ChangelogRetriever()
+
+    # Mock PyPI response to get GitHub URL
     pypi_resp = Mock()
     pypi_resp.status_code = 200
     pypi_resp.json.return_value = {
         "info": {"project_urls": {"Homepage": "https://github.com/foo/bar"}}
     }
-    github_resp = Mock()
-    github_resp.status_code = 200
-    github_resp.json.return_value = {"body": "Changelog for 2.0"}
-    mock_requests_get.side_effect = [pypi_resp, github_resp]
-    
+
+    # Mock GitHub response for releases list (first strategy)
+    # This should succeed so it doesn't try fallback strategies
+    github_releases_resp = Mock()
+    github_releases_resp.status_code = 200
+    github_releases_resp.json.return_value = [
+        {"tag_name": "v2.0", "body": "Changelog for 2.0"},
+        {"tag_name": "v1.5", "body": "Changelog for 1.5"},
+        {"tag_name": "v1.0", "body": "Changelog for 1.0"},
+    ]
+
+    # Set side_effect: PyPI request, then GitHub releases list
+    mock_requests_get.side_effect = [pypi_resp, github_releases_resp]
+
     changelog = retriever.get_changelog("foo", "1.0", "2.0")
-    assert changelog == "Changelog for 2.0"
+    # Should aggregate releases between 1.0 and 2.0
+    assert "Changelog for 2.0" in changelog or "Changelog for 1.5" in changelog

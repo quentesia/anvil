@@ -1,9 +1,9 @@
 [project]
 name = "anvil-py"
-version = "0.1.1"
+version = "0.1.0"
 description = "AI-powered agentic dependency manager that analyzes changelogs and safely upgrades packages."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<4.0"
 license = { file = "LICENSE" }
 authors = [
   { name = "Akash Bhat", email = "quentesia.art@gmail.com" },
@@ -53,3 +53,10 @@ dev-dependencies = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/anvil"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+norecursedirs = ["src", "build", "dist", ".git", ".tox", "*.egg"]
