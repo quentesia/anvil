@@ -55,6 +55,7 @@ def select_node(state: UpgradeWorkflowState) -> dict:
                 target_version=entry["latest"],
                 changelog=None,
                 assessment=None,
+                multi_agent_assessment=None,
                 approved=False,
                 installed=False,
                 tests_passed=None,

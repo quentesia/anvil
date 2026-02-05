@@ -8,7 +8,8 @@ class PackageUpgradeState(TypedDict):
     current_version: str
     target_version: str
     changelog: Optional[str]
-    assessment: Optional[ImpactAssessment]
+    assessment: Optional[ImpactAssessment]  # Legacy single-agent assessment
+    multi_agent_assessment: Optional[dict]  # New multi-agent assessment (serialized)
     approved: bool
     installed: bool
     tests_passed: Optional[bool]
